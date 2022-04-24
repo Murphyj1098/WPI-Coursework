@@ -1,0 +1,39 @@
+Smart Stove Server Notes
+
+HTTP Info:
+    GET     - a request to the server that should only receive data from the server, no other effects
+    POST    - a request to the server asking the server to accept data in the post request
+
+ESP Web Server Address: "http://***.***.*.22:255"
+Our network Address:    "http://**.***.***.114:255"
+
+http://**.***.***.114:255/StoveState
+
+    GET request
+
+    responseContent (MIT App Dev Field)
+    content type: "text/plain"
+        "on"  - the stove is on
+        "off" - the stove is off
+
+    "on" and "off" strings can be used as boolean for any control logic
+
+
+http://**.***.***.114:255/StoveMotor
+
+    POST request
+
+    PostText (MIT App Dev Field)
+        text content does not matter, the POST request itself starts the motor routine
+
+
+Note:
+1.  The "when Web1.GotText" block will trigger on any POST or GET request
+        - The responseContent of a POST should be ignored
+        - The responseContent of a GET  is the content requested from the server
+
+        (can use the "get url" in an if to compare if the text came from a GET or POST)
+            - See example screenshot
+
+2.  Using "set Web1.SaveResponse to true" allows the contentResponse to be saved to a file
+        - The app can save the contentResponse of the StoveState GET to a file to keep track of the state

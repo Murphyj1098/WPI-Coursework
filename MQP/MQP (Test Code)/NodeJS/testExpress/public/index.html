@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<h2 style="text-align:center">Radio 1: Select Frequency</h2>
+
+<form action = "http://spectrumobservatory.wpi.edu/radio1" method = 'POST' style="text-align:center">
+  <input type="radio" id="CenterFreq" name="CenterFreq" value="600000000">
+  <label for="CenterFreq">600 MHz</label>
+  <input type="radio" id="CenterFreq" name="CenterFreq" value="850000000">
+  <label for="CenterFreq">850 MHz</label><br>
+  <input type="submit" value="Submit">
+</form>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<svg id="visualisation" width="1100" height="440"></svg>
+
+<script type="text/javascript">
+
+var svg = d3.select('#svg1');
+
+var a = []
+var I = []
+var Q = []
+var mag = []
+var time = []
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 200},
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+
+var dir = "data/";
+var fileextension = ".csv";
+$.ajax({
+    //This will retrieve the contents of the folder if the folder is configured as 'browsable'
+    url: dir,
+    success: function (data) {
+        //List all matching file names in the page
+        $(data).find("a:contains(" + fileextension + ")").each(function () {
+            var filename = this.href.replace(window.location.pathname, "").replace("http://", ""); // this makes the path relative to the current page location
+    var pathName = filename.substring(filename.lastIndexOf('/') + 1);
+            d3.text(pathName, (function(d){ //Reads in the CSV as a text file
+            a = d3.csvParseRows(d); //Parses the text file as a csv, a is an array of each row
+            a.forEach((item, index) => { //Each item in 'a' is an arraysize 2 with I and Q
+              I.push(parseInt(item[0], 2)); //Stores I of each time sample
+              Q.push(parseInt(item[1], 2)); //Stores Q of each time sample
+            });
+            calcMag(I,Q);
+            //normalize();
+            var i;
+            for(i = 0; i < mag.length; i++){
+              time.push(i);
+            }
+            graph(time,mag.slice(1,time.length));
+
+          }));
+        });
+    }
+});
+
+/*
+d3.text("data1_3.csv", (function(d){ //Reads in the CSV as a text file
+  a = d3.csvParseRows(d); //Parses the text file as a csv, a is an array of each row
+  a.forEach((item, index) => { //Each item in 'a' is an arraysize 2 with I and Q
+    I.push(parseInt(item[0], 2)); //Stores I of each time sample
+    Q.push(parseInt(item[1], 2)); //Stores Q of each time sample
+  });
+  calcMag(I,Q);
+  //normalize();
+  var i;
+  for(i = 0; i < mag.length; i++){
+    time.push(i);
+  }
+  graph(time,mag.slice(1,time.length));
+
+}));
+*/
+
+// Graphing the data
+function graph(xaxis, data){
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([d3.min(xaxis), d3.max(xaxis)])
+    .range([ 0, width ]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([d3.min(data), d3.max(data)])
+    .range([ height, 0 ]);
+  svg.append("g")
+    .call(d3.axisLeft(y)
+    .tickFormat(d3.format(".1e")));
+
+
+  // Add the line
+  svg.append("path")
+    .datum(data)
+    .attr("fill", "none")
+    .attr("stroke", "steelblue")
+    .attr("stroke-width", 1.5)
+    .attr("d", d3.line()
+      //.x(function(d) { return x(xaxis) })
+      //.y(function(d) { return y(data) })
+      .x(function(d, idx) {return x(xaxis[idx])})
+      .y(function(d, idx) {return y(data[idx])})
+    )
+}
+
+function calcMag(I, Q){
+  for(i = 3; i < I.length; i++){
+    mag.push(Math.sqrt((I[i]*I[i]) + (Q[i] * Q[i])));
+  }
+}
+
+function normalize(){
+  var j;
+  for(j = 0; j < mag.length; j++){
+    if(mag[j] < 5000000000)
+      mag[j] = 0;
+  }
+}
+
+
+</script>

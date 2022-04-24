@@ -1,0 +1,12 @@
+# Byte-compiled files
+__pycache__/
+
+# System Files
+RadioDaemon.log
+RadioDaemon.pid
+
+# Specific Test Files
+src/sample.json
+src/sample.dat
+src/sample1.dat
+src/sample2.dat
